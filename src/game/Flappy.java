@@ -266,7 +266,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	}
 
 	class ground{
-		float scale_x = 1, scale_y = 0.041f, y_start = 0.96f; //variabili per il scaling del image
+		float scale_x = 1, scale_y = 0.041f, y_start = 0.96f, normalizeX = 1; //variabili per il scaling del image
 		int x = 0, y = (int)((float)getHeight() * y_start), height = 0, width = 0;
 		float grass_speed = 0.0033f;
 		void draw(Graphics2D g2d) {
@@ -274,14 +274,15 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 			
 	     	g2d.drawImage(images.grass, x, y, width, height, getFocusCycleRootAncestor());
-	     	g2d.drawImage(images.grass, x+width, y, width, height, getFocusCycleRootAncestor());
+	     	g2d.drawImage(images.grass, x-width, y, width, height, getFocusCycleRootAncestor());
 			
 			//g2d.drawImage(images.grass, 0, 0, 100, 100, getFocusCycleRootAncestor());
 		}
 		void update(){
-			x -= (int)(grass_speed*(float)getWidth());
-	     	if(x <= -width)
-	    	 	x = 0;
+			normalizeX -= grass_speed;
+			x = (int)(normalizeX*(float)getWidth());
+	     	if(normalizeX < 0)
+	    	 	normalizeX = 1.0f;
 		}
 	}
 
