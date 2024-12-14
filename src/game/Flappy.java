@@ -1,7 +1,9 @@
 package game;
 
 import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Graphics;
@@ -12,313 +14,19 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Random;
 import java.io.File;
 import java.io.IOException;
-import java.awt.image.ImageObserver;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-/* 
-class FlappyBird extends JPanel implements ActionListener, KeyListener {
-	//original width = 960
-	//original height = 644 + 28 = 672
-
-	boolean gameStart = false;
-	static int waitTime = 10; //milli secondi, time to wait between frames -> frame rate
-	
-	private static final long serialVersionUID = 1L;
-	Timer timer;
-	
-
-	//elements on screen
-	ArrayList<Bird> birdList = new ArrayList<>();
-	ArrayList<pipes> pipesList = new ArrayList<>();
-	
-	//images
-	loadImages images = new loadImages();
-
-	//Background
-	Background background = new Background();
-
-	//ground
-	ground ground = new ground();
-	
-	//bird
-	Bird bird = new Bird();
-	
-	void onWindowResize(){
-		
-	}
-
-	public FlappyBird() {
-		setPreferredSize(new Dimension(800, 600));
-		timer = new Timer(waitTime, this);
-	    timer.start();
-	     
-		//images
-		images.uploadImages();
-		
-		// Add ComponentListener to detect window size changes
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                Dimension newSize = getSize();
-                onWindowResize();
-            }
-        });
-	    addKeyListener(this);
-	    setFocusable(true);
-	}
-	
-	public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-		background.draw((Graphics2D)g);
-		ground.draw((Graphics2D)g);
-		bird.draw((Graphics2D)g);
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		background.update();
-		bird.update();
-		ground.update();
-		repaint();
-	}
-	
-	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	 public void keyPressed(KeyEvent e) {
-        int keyCode = e.getKeyCode();
-
-        if (keyCode == KeyEvent.VK_SPACE) {
-            // If the spacebar is pressed, the bird should flap
-            if (!gameStart) {
-               	gameStart = true; // Start the game on the first press of spacebar
-            }
-			else{
-				for(Bird bird: birdList){
-					bird.flap();
-				}
-			}
-    	}
-	 }
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	
-	
-	class Bird{
-		Rectangle hitbox;
-		float scale_x = 0.071f, scale_y = 0.071f, x_start = 0.2f, y_start = 0.4f, y_percentage_transform; //variabili per il scaling del image
-		int x = 0, y = 240, height = 0, width = 0;
-		float gravity = 9.81f;
-		float speed = 0.0f;
-		int frameCounter = 0;
-		boolean isFalling = false;
-		int drawImage = 0;
-		float count = 0.0f;
-		int wave;
-		double rotationAngle = 	0;
-		float currentSpeed = 0.0f;
-		int goY = 10000;
-
-		void update() {
-			height = (int)((float)getHeight() * scale_y);
-			width = (int)((float)getWidth() * scale_x);
-			x = (int)((float)getWidth() * x_start);
-			y_percentage_transform = (float)y/(float)getHeight();
-			/* 
-			wave = (int)((float)getHeight() * 0.01f);
-			y = (int)(y_percentage_transform*(float)getHeight());
-			if(!isFalling){
-				if(frameCounter == 10){
-					drawImage = (drawImage+1)%3;
-					frameCounter = 0;
-				}
-				frameCounter++;
-			}
-
-			
-			if(!gameStart) {
-				
-				y += (int)(Math.sin(count)*wave);
-				count += 0.1f;
-				if(count>=628) {
-					count = 0;
-				}
-			}else{
-					y += currentSpeed * waitTime/100 + 0.5f * gravity * waitTime/100 * waitTime/100;
-					currentSpeed += gravity * waitTime/100;
-				}
-		
-			
-		}
-		void draw(Graphics2D g2d) {
-			g2d.drawImage(images.flappyImage[drawImage], x, y, width, height, getFocusCycleRootAncestor());
-			
-		}
-		void flap(){
-
-		}
-	}
-
-	
-	class pipes{
-		Image testa;
-		Image corpo;
-		Rectangle hitbox;
-
-		float scale_x, scale_y; //variabili per il scaling del image
-		int x, y, height, width;
-
-		public pipes() {
-		}
-		
-		void draw(Graphics2D g2d) {
-			
-		}		
-	}
-	
-	class ground{
-		float scale_x = 1, scale_y = 0.041f, y_start = 0.96f; //variabili per il scaling del image
-		int x = 0, y = (int)((float)getHeight() * y_start), height = 0, width = 0;
-		int grass_speed = 2;
-		void draw(Graphics2D g2d) {
-			
-			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-			
-	     	g2d.drawImage(images.grass, x, y, width, height, getFocusCycleRootAncestor());
-	     	g2d.drawImage(images.grass, x+width, y, width, height, getFocusCycleRootAncestor());
-			
-			//g2d.drawImage(images.grass, 0, 0, 100, 100, getFocusCycleRootAncestor());
-		}
-		void update(){
-			height = (int)((float)getHeight() * scale_y);
-			width = (int)((float)getWidth() * scale_x);
-			y = (int)((float)getHeight() * y_start);
-
-			x -= grass_speed;
-	     	if(x <= -width)
-	    	 	x = 0;
-		}
-	}
-	
-	class Background{
-		float scale_x = 1, scale_y = 0.96f; //variabili per il scaling del image
-		int x = 0, y = 0, height = 0, width = 0;
-		float opacity = 1.0f;  // Initial opacity
-		int backgroundNumber = 0;
-		//frame counter 
-		int frameCounter = 0; //reset dopo 300 frame, per fare frame di animazione di background e bird
-		void update() {
-			height = (int)((float)getHeight() * scale_y);
-			width = (int)((float)getWidth() * scale_x);
-			// Increment opacity
-			if(frameCounter == 100){
-            	opacity -= 0.01f;
-				frameCounter = 0;
-			}
-            // If opacity reaches zero, switch to the next image
-            if (opacity <= 0.0f) {
-            	backgroundNumber = (backgroundNumber+1)%3;
-                opacity = 1.0f;  // Reset opacity for next blend
-            }
-		}
-		void draw(Graphics2D g2d) {
-			//bg1
-			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
-			g2d.drawImage(images.Background[backgroundNumber], 0, 0, width, height, getFocusCycleRootAncestor());
-			//bg2
-			int nextImageIndex = (backgroundNumber + 1) % 3;
-	    	g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f - opacity));
-	    	g2d.drawImage(images.Background[nextImageIndex], 0, 0, width, height, getFocusCycleRootAncestor());
-			frameCounter++;
-		}
-	}
-	
-	void reset() {
-		
-	}
-
-	class loadImages{
-		Image[] Background = new Image[3];
-		Image[] flappyImage = new Image[4];
-		Image grass, pipe, pipeHead;
 
 
-		void uploadImages() {
-			//background
-			for(int i = 0; i<3; i++) {
-				try {
-					Background[i] = ImageIO.read(new File("Images/background/bg" + i + ".png"));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			/* 
-			//land
-			try {
-				ground = ImageIO.read(new File("Images/sfondo/ground.png"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		
-			//grass
-			try {
-				grass = ImageIO.read(new File("Images/Ground/grass.png"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			//pipe
-			try {
-				pipe = ImageIO.read(new File("Images/Pipe/pipe.png"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//pipeHead
-			try {
-				pipeHead = ImageIO.read(new File("Images/Pipe/pipeHead.png"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//flappy image
-			for(int i = 1; i<4; i++) {
-				try {
-					flappyImage[i-1] = ImageIO.read(new File("Images/Bird/2bird" + i + ".png"));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-	}
 
-}
-*/
 class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	Timer timer;
 	//elements on screen
@@ -326,7 +34,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	ArrayList<pipes> pipesList = new ArrayList<>();
 	Background background = new Background();
 	ground ground = new ground();
-
+	int score = 0;
 
 	//images
 	loadImages images = new loadImages();
@@ -342,13 +50,6 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 		ground.width = (int)((float)getWidth() * ground.scale_x);
 		ground.height = (int)((float)getHeight() * ground.scale_y);
 		ground.y = (int)((float)getHeight() * ground.y_start);
-
-		for(Bird bird: birdList){
-			bird.height = (int)((float)getHeight() * bird.scale_y);
-			bird.width = (int)((float)getWidth() * bird.scale_x);
-			bird.x = (int)((float)getWidth() * bird.x_start);
-			bird.y = (int)((float)getHeight() * bird.y_start);
-		}
 		
 
 
@@ -361,7 +62,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	     
 		//images
 		images.uploadImages();
-		birdList.add(new Bird());
+		//birdList.add(new Bird());
 		//pipesList.add(new pipes());
 		// Add ComponentListener to detect window size changes
         addComponentListener(new ComponentAdapter() {
@@ -381,14 +82,47 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 			bird.draw((Graphics2D)g);
 		for (pipes pipe : pipesList) {
         	pipe.draw((Graphics2D) g);
-    	}
+    	} 
+		g.setColor(Color.BLACK);
+        g.setFont(new Font("Consolas", Font.ITALIC, 40)); // Set font for the score
+        g.drawString(""+score, 50, 50); // Draw the score at position (50, 50)
+		
 	}
 	int count = 0;
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		background.update();
-		for (Bird bird : birdList)
+		for (int i = 0; i < birdList.size(); i++) {
+			Bird bird = birdList.get(i);
 			bird.update();
+			if((bird.y+bird.height >= ground.y || bird.y <= 0) && gameStart == true){	
+				birdList.remove(i);
+				i--;
+			}
+			if(pipesList.size() > 0){
+				if(pipesList.get(0).bottomPipeX < bird.x + bird.width && pipesList.get(0).bottomPipeX + pipesList.get(0).width > bird.x){
+					if(pipesList.get(0).corSpaceY > bird.y || pipesList.get(0).bottomPipeY < bird.y + bird.height){
+						birdList.remove(i);
+						i--;
+						//System.out.println("Collision");
+					}
+					else{
+						if(pipesList.get(0).pipeScoreAssigned == false){
+							score++;
+							pipesList.get(0).pipeScoreAssigned = true;
+						}
+					}
+					
+				}
+			}
+			
+		}
+		if(birdList.size() == 0){
+			gameStart = false;
+			birdList.add(new Bird());
+			score = 0;
+			pipesList.clear();
+		}
 		ground.update();
 		
 		if (gameStart) {
@@ -449,6 +183,10 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 		float currentSpeed = 0.0f, gravity = 9.81f;
 		int contFall = 0;
 		void update(){
+			height = (int)((float)getHeight() * scale_y);
+			width = (int)((float)getWidth() * scale_x);
+			x = (int)((float)getWidth() * x_start);
+			y = (int)((float)getHeight() * y_start);
 			if(!isFalling){
 				if(frameCounter == 5){
 					drawImage = (drawImage+1)%3;
@@ -548,7 +286,8 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	}
 
 	class pipes{
-		Rectangle hitbox = new Rectangle(0, 0, 0, 0);
+		boolean pipeScoreAssigned = false;
+		//Rectangle hitbox = new Rectangle(0, 0, 0, 0);
 		float scale_x = 0.101f, scale_y = 0.327f, x_start = 0, y_start = 0, tube_speed = 0.0033f;
 		float scale_head_x = 0.108f, scale_head_y = 0.075f;
 		int headWidth = 0, headHeight = 0;
@@ -578,8 +317,8 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 			corSpaceY = (int)(hitBoxY*(float)getHeight());
 			//bottom pipeHead
 			bottomPipeY = (int)(space*(float)getHeight()) + corSpaceY;
-			hitbox = new Rectangle(bottomPipeX, corSpaceY, headWidth, bottomPipeY-corSpaceY);
-			//scale_head_y = (int)(space*(float)getHeight())+(int)((float)getHeight()*hitBoxY);
+			//hitbox = new Rectangle(bottomPipeX, corSpaceY, headWidth, bottomPipeY-corSpaceY);
+			
 		}
 		void draw(Graphics2D g2d) {
 			g2d.drawImage(images.pipe, bottomPipeX+(headWidth/2-width/2), 0, width, corSpaceY-headHeight, getFocusCycleRootAncestor());
@@ -647,12 +386,6 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
 
 }
-
-
-
-
-
-
 
 public class Flappy {
 	public static void main(String[] args) {
