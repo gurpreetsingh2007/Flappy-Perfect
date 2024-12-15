@@ -89,30 +89,57 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 		
 	}
 	int count = 0;
+	int index = 0;
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		background.update();
 		for (int i = 0; i < birdList.size(); i++) {
 			Bird bird = birdList.get(i);
 			bird.update();
+			
+			boolean remove = false;
 			if((bird.y+bird.height >= ground.y || bird.y <= 0) && gameStart == true){	
-				birdList.remove(i);
-				i--;
+				remove = true;
 			}
 			if(pipesList.size() > 0){
+				if(!pipesList.get(0).pipeScoreAssigned)
+					index = 0;
+				else
+					index = 1;
+				ArrayList<Float> result = bird.neuralNet.testNetwork(bird.y, bird.y + bird.height, pipesList.get(index).corSpaceY, pipesList.get(index).bottomPipeY);
+				if(result.get(0)>0.5f){
+					bird.flap();
+				}
+				System.out.println(index);
 				if(pipesList.get(0).bottomPipeX < bird.x + bird.width && pipesList.get(0).bottomPipeX + pipesList.get(0).width > bird.x){
 					if(pipesList.get(0).corSpaceY > bird.y || pipesList.get(0).bottomPipeY < bird.y + bird.height){
-						birdList.remove(i);
-						i--;
+						remove = true;
 						//System.out.println("Collision");
 					}
-					else{
+					
+					
+				}
+				else if(bird.x > pipesList.get(0).bottomPipeX + pipesList.get(0).width){
 						if(pipesList.get(0).pipeScoreAssigned == false){
 							score++;
 							pipesList.get(0).pipeScoreAssigned = true;
 						}
 					}
-					
+			}
+			if(remove == true){
+				if(birdList.size() > 1){
+					birdList.remove(i);
+					i--;
+				}
+				else{
+					for(int x = 0; x<300; x++){
+						birdList.add(new Bird());
+						birdList.get(x+1).neuralNet.copyWeights(birdList.get(x).neuralNet);
+						birdList.get(x+1).neuralNet.perturbWeights(0.1f);
+					}
+					pipesList.clear();
+					birdList.remove(i);
+					i--;
 				}
 			}
 			
@@ -121,7 +148,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 			gameStart = false;
 			birdList.add(new Bird());
 			score = 0;
-			pipesList.clear();
+			
 		}
 		ground.update();
 		
@@ -158,12 +185,12 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
             // If the spacebar is pressed, the bird should flap
             if (!gameStart) {
                	gameStart = true; // Start the game on the first press of spacebar
-            }
+            }/* 
 			else{
 				for(Bird bird: birdList){
 					bird.flap();
 				}
-			}
+			}*/
     	}
 	 }
 
@@ -174,6 +201,8 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	}
 
 	class Bird{
+
+		NeuralNetwork neuralNet = new NeuralNetwork(4, 6, 10, 6, 3, 1);
 		float scale_x = 0.071f, scale_y = 0.071f, x_start = 0.2f, y_start = 0.4f;
 		int x = 0, y = 240, height = 0, width = 0; //variabili per il scaling dell'image
 		int drawImage = 0;
