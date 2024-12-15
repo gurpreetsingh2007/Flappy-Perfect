@@ -110,7 +110,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 				if(result.get(0)>0.5f){
 					bird.flap();
 				}
-				System.out.println(index);
+				//System.out.println(index);
 				if(pipesList.get(0).bottomPipeX < bird.x + bird.width && pipesList.get(0).bottomPipeX + pipesList.get(0).width > bird.x){
 					if(pipesList.get(0).corSpaceY > bird.y || pipesList.get(0).bottomPipeY < bird.y + bird.height){
 						remove = true;
