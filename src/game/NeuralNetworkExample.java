@@ -1,7 +1,12 @@
 package game;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Scanner;
 
 // Matrix class for each layer (input to next layer transformation)
 class Matrix {
@@ -103,22 +108,74 @@ class NeuralNetwork {
         return output;
     }
     // Function to vary weights slightly by adding a small random perturbation
-void perturbWeights(float perturbationMagnitude) {
-    Random random = new Random();
+    void perturbWeights(float perturbationMagnitude) {
+        Random random = new Random();
 
-    // Iterate over each layer in the network
-    for (Matrix layer : layers) {
-        // Iterate over each neuron (output unit) in the layer
-        for (ArrayList<Float> neuronWeights : layer.weights) {
-            // Iterate over each weight in the neuron
-            for (int i = 0; i < neuronWeights.size(); i++) {
-                // Add a small random perturbation to each weight
-                float perturbation = (random.nextFloat() - 0.5f) * 2 * perturbationMagnitude; // Range: [-magnitude, magnitude]
-                neuronWeights.set(i, neuronWeights.get(i) + perturbation);
+        // Iterate over each layer in the network
+        for (Matrix layer : layers) {
+            // Iterate over each neuron (output unit) in the layer
+            for (ArrayList<Float> neuronWeights : layer.weights) {
+                // Iterate over each weight in the neuron
+                for (int i = 0; i < neuronWeights.size(); i++) {
+                    // Add a small random perturbation to each weight
+                    float perturbation = (random.nextFloat() - 0.5f) * 2 * perturbationMagnitude; // Range: [-magnitude, magnitude]
+                    neuronWeights.set(i, neuronWeights.get(i) + perturbation);
+                }
             }
         }
     }
-}
+    public void recordWeights(String filename) {
+            try (FileWriter writer = new FileWriter(filename)) {
+                for (int layer = 0; layer < layers.size(); layer++) {
+                    writer.write("Layer " + layer + " weights:\n");
+                    ArrayList<ArrayList<Float>> layerWeights = layers.get(layer).weights;
+                    
+                    for (int i = 0; i < layerWeights.size(); i++) {
+                        writer.write("Neuron " + i + ": ");
+                        ArrayList<Float> neuronWeights = layerWeights.get(i);
+                        for (float weight : neuronWeights) {
+                            writer.write(weight + " ");
+                        }
+                        writer.write("\n");
+                    }
+                    writer.write("\n");
+                }
+                //System.out.println("Weights successfully saved to " + filename);
+            } catch (IOException e) {
+                //System.out.println("An error occurred while saving the weights.");
+                e.printStackTrace();
+            }
+        }
+    // Function to load the weights from a .txt file
+    public void loadWeights(String filename) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            int layerIndex = 0;
+            int neuronIndex = 0;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Layer")) {
+                    layerIndex = Integer.parseInt(line.split(" ")[1]); // Extract the layer number
+                    neuronIndex = 0; // Reset neuron index for each layer
+                } else if (line.startsWith("Neuron")) {
+                    // Read the weights for this neuron
+                    Scanner scanner = new Scanner(line.split(":")[1].trim());
+                    ArrayList<Float> neuronWeights = layers.get(layerIndex).weights.get(neuronIndex);
+                    for (int i = 0; i < neuronWeights.size(); i++) {
+                        if (scanner.hasNextFloat()) {
+                            neuronWeights.set(i, scanner.nextFloat()); // Set weight value
+                        }
+                    }
+                    scanner.close();
+                    neuronIndex++;
+                }
+            }
+            //System.out.println("Weights successfully loaded from " + filename);
+        } catch (IOException e) {
+            //System.out.println("An error occurred while reading the weights.");
+            //e.printStackTrace();
+        }
+    }
     // Function to copy weights from another neural network
     void copyWeights(NeuralNetwork source) {
         if (this.layers.size() != source.layers.size()) {

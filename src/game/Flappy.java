@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.Rectangle;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -35,7 +34,8 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	Background background = new Background();
 	ground ground = new ground();
 	int score = 0;
-
+	int best_score = 0;
+	float game_speed = 5.0f;
 	//images
 	loadImages images = new loadImages();
 
@@ -51,8 +51,6 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 		ground.height = (int)((float)getHeight() * ground.scale_y);
 		ground.y = (int)((float)getHeight() * ground.y_start);
 		
-
-
 	}
 
 	public FlappyBird() {
@@ -94,6 +92,10 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	public void actionPerformed(ActionEvent e) {
 		background.update();
 		for (int i = 0; i < birdList.size(); i++) {
+			if((best_score < score && score != 0)){
+				best_score = score;
+				birdList.get(0).neuralNet.recordWeights("weights.txt");
+			}
 			Bird bird = birdList.get(i);
 			bird.update();
 			
@@ -106,6 +108,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 					index = 0;
 				else
 					index = 1;
+				
 				ArrayList<Float> result = bird.neuralNet.testNetwork(bird.y, bird.y + bird.height, pipesList.get(index).corSpaceY, pipesList.get(index).bottomPipeY);
 				if(result.get(0)>0.5f){
 					bird.flap();
@@ -114,6 +117,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 				if(pipesList.get(0).bottomPipeX < bird.x + bird.width && pipesList.get(0).bottomPipeX + pipesList.get(0).width > bird.x){
 					if(pipesList.get(0).corSpaceY > bird.y || pipesList.get(0).bottomPipeY < bird.y + bird.height){
 						remove = true;
+						
 						//System.out.println("Collision");
 					}
 					
@@ -127,16 +131,20 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 					}
 			}
 			if(remove == true){
+				
 				if(birdList.size() > 1){
 					birdList.remove(i);
 					i--;
 				}
 				else{
-					for(int x = 0; x<300; x++){
+					for(int x = 0; x<500; x++){
+						
 						birdList.add(new Bird());
 						birdList.get(x+1).neuralNet.copyWeights(birdList.get(x).neuralNet);
 						birdList.get(x+1).neuralNet.perturbWeights(0.1f);
 					}
+					score = 0;
+					count = 125;
 					pipesList.clear();
 					birdList.remove(i);
 					i--;
@@ -147,13 +155,15 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 		if(birdList.size() == 0){
 			gameStart = false;
 			birdList.add(new Bird());
+			birdList.get(0).neuralNet.loadWeights("weights.txt");
+			count = 125;
 			score = 0;
 			
 		}
 		ground.update();
 		
 		if (gameStart) {
-			if (count == 125) {
+			if (count*game_speed >= 125) {
 				pipesList.add(new pipes()); // Add a new pipe every 100 frames
 				count = 0;
 			}
@@ -202,14 +212,14 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
 	class Bird{
 
-		NeuralNetwork neuralNet = new NeuralNetwork(4, 6, 10, 6, 3, 1);
+		NeuralNetwork neuralNet = new NeuralNetwork(4, 6, 36, 6, 3, 1);
 		float scale_x = 0.071f, scale_y = 0.071f, x_start = 0.2f, y_start = 0.4f;
 		int x = 0, y = 240, height = 0, width = 0; //variabili per il scaling dell'image
 		int drawImage = 0;
 		boolean isFalling = false;
 		int frameCounter = 0;
 		float count = 0.0f;
-		float currentSpeed = 0.0f, gravity = 9.81f;
+		float currentSpeed = 0.0f, gravity = 9.81f*game_speed;
 		int contFall = 0;
 		void update(){
 			height = (int)((float)getHeight() * scale_y);
@@ -231,14 +241,14 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 				}
 			}else{
 				if(isFalling){
-					y_start +=  (float)(currentSpeed * waitTime/100 + 0.5f * gravity * waitTime/100 * waitTime/100)/(float)(getHeight());
+					y_start +=  ((float)(currentSpeed * waitTime/100 + 0.5f * gravity * waitTime/100 * waitTime/100)/(float)(getHeight()))*game_speed;
 					currentSpeed += gravity * waitTime/100;
 				}else{
 					currentSpeed = 0.0f;
-					y_start -=  0.01;
+					y_start -=  0.01*game_speed;
 					
 					contFall++;
-					if(contFall >= 10){
+					if(contFall >= 10/game_speed){
 						isFalling = true;
 						contFall = 0;
 					}
@@ -308,7 +318,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 			//g2d.drawImage(images.grass, 0, 0, 100, 100, getFocusCycleRootAncestor());
 		}
 		void update(){
-			normalizeX -= grass_speed;
+			normalizeX -= grass_speed*game_speed;
 			x = (int)(normalizeX*(float)getWidth());
 	     	if(normalizeX < 0)
 	    	 	normalizeX = 1.0f;
@@ -318,7 +328,7 @@ class FlappyBird extends JPanel implements ActionListener, KeyListener {
 	class pipes{
 		boolean pipeScoreAssigned = false;
 		//Rectangle hitbox = new Rectangle(0, 0, 0, 0);
-		float scale_x = 0.101f, scale_y = 0.327f, x_start = 0, y_start = 0, tube_speed = 0.0033f;
+		float scale_x = 0.101f, scale_y = 0.327f, x_start = 0, y_start = 0, tube_speed = 0.0033f*game_speed;
 		float scale_head_x = 0.108f, scale_head_y = 0.075f;
 		int headWidth = 0, headHeight = 0;
 		int height = 0, width = 0;
